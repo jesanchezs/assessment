@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plan de Expansión Nacional | TuGruero</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&family=Raleway:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-orange: #FF6600;
+            --dark-bg: #0F1115;
+            --darker-bg: #07080A;
+            --text-light: #F4F4F5;
+            --text-muted: #A1A1AA;
+            --accent-glow: rgba(255, 102, 0, 0.2);
+            --success-green: #10B981;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body, html {
+            width: 100%;
+            height: 100%;
+            font-family: 'Outfit', sans-serif;
+            background-color: var(--dark-bg);
+            color: var(--text-light);
+            overflow: hidden;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+
+        h1, h2, h3, h4, th { font-family: 'Raleway', sans-serif; }
+        .highlight { color: var(--primary-orange); }
+
+        /* Indicador sutil al editar */
+        [contenteditable="true"] {
+            outline: none;
+            transition: all 0.2s;
+        }
+        [contenteditable="true"]:focus, [contenteditable="true"]:hover {
+            outline: 2px dashed var(--primary-orange);
+            background: rgba(255, 255, 255, 0.05);
+            padding: 4px;
+            border-radius: 4px;
+            cursor: text;
+        }
+
+        .bg-animated {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle at 15% 50%, var(--accent-glow), transparent 40%),
+                        radial-gradient(circle at 85% 30%, rgba(255,102,0,0.1), transparent 50%);
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        /* Botón Fullscreen */
+        #fullscreenBtn {
+            position: fixed; top: 15px; right: 20px;
+            background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.2);
+            color: white; padding: 8px 12px; border-radius: 6px;
+            cursor: pointer; z-index: 1000; font-size: 1.2rem; transition: all 0.3s;
+        }
+        #fullscreenBtn:hover { background: var(--primary-orange); border-color: var(--primary-orange); }
+
+        /* Estructura de Slides */
+        .presentation { position: relative; width: 100%; height: 100%; z-index: 1; }
+        .slide {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            display: flex; flex-direction: column; justify-content: center;
+            padding: 5% 8%; opacity: 0; transform: translateY(40px) scale(0.95);
+            transition: all 0.6s cubic-bezier(0.25, 1, 0.5, 1);
+            pointer-events: none; visibility: hidden;
+        }
+        .slide.active { opacity: 1; transform: translateY(0) scale(1); pointer-events: auto; visibility: visible; }
+        .slide.past { opacity: 0; transform: translateY(-40px) scale(0.95); }
+
+        /* Tipografía Base */
+        .slide h1 { font-size: 3.5rem; line-height: 1.1; margin-bottom: 20px; font-weight: 800; }
+        .slide h2 { font-size: 2.2rem; margin-bottom: 15px; font-weight: 600; border-bottom: 2px solid var(--primary-orange); padding-bottom: 10px; display: inline-block;}
+        .slide p { font-size: 1.1rem; line-height: 1.6; color: var(--text-muted); margin-bottom: 15px; max-width: 900px; }
+        .slide .lead { color: var(--text-light); font-size: 1.3rem; border-left: 4px solid var(--primary-orange); padding-left: 20px; font-weight: 600; }
+
+        .logo-container { margin-bottom: 30px; }
+        .logo-container img { height: 60px; object-fit: contain; }
+
+        .link-interactive {
+            display: inline-block; margin-top: 30px; padding: 12px 24px;
+            background: var(--primary-orange); color: white; text-decoration: none;
+            font-weight: bold; border-radius: 8px; font-family: 'Raleway', sans-serif;
+            box-shadow: 0 4px 15px rgba(255, 102, 0, 0.4); transition: transform 0.3s;
+        }
+        .link-interactive:hover { transform: scale(1.05); }
+
+        /* Matriz de Decisión */
+        .matrix-container { width: 100%; overflow-x: auto; margin-top: 20px; background: rgba(0,0,0,0.3); border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); padding: 15px;}
+        table { width: 100%; border-collapse: collapse; text-align: center; }
+        th, td { padding: 12px 10px; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        th { font-family: 'Raleway', sans-serif; color: var(--text-light); font-size: 0.9rem; text-transform: uppercase; }
+        .col-weight { color: var(--primary-orange); font-weight: bold; white-space: nowrap; }
+        .input-cell { background: transparent; border: 1px dashed rgba(255,255,255,0.2); color: white; width: 60px; text-align: center; font-size: 1.1rem; padding: 5px; border-radius: 4px; font-family: inherit;}
+        .input-cell:focus { outline: none; border-color: var(--primary-orange); background: rgba(255,102,0,0.1); }
+        .weight-input { width: 55px; color: var(--primary-orange); font-weight: bold; }
+        .row-total { background: rgba(255,102,0,0.1); font-weight: bold; font-size: 1.3rem; }
+        .winner-cell { color: var(--success-green) !important; font-size: 1.5rem; text-shadow: 0 0 10px rgba(16, 185, 129, 0.4); font-weight: bold; }
+
+        /* Grid & Cards */
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-top: 20px; }
+        .card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,102,0,0.2); padding: 25px; border-radius: 12px; }
+        .card h3 { color: var(--primary-orange); margin-bottom: 12px; font-size: 1.2rem; }
+
+        /* Funnel / Barras */
+        .funnel-container { margin-top: 30px; display: flex; flex-direction: column; gap: 15px; }
+        .funnel-bar { display: flex; align-items: center; border-radius: 8px; overflow: hidden; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);}
+        .funnel-label { width: 25%; padding: 15px; font-weight: bold; border-right: 1px solid rgba(255,255,255,0.1); }
+        .funnel-fill { padding: 15px; color: white; font-weight: bold; text-align: right; white-space: nowrap; transition: width 0.5s;}
+        .b2b-fill { background: linear-gradient(90deg, #FF6600, #cc5200); width: 60%; }
+        .b2b2c-fill { background: linear-gradient(90deg, #FF8533, #e67300); width: 24%; }
+        .b2c-fill { background: linear-gradient(90deg, #FFA366, #ff8c42); width: 16%; }
+        .funnel-kpi { padding-left: 15px; color: var(--text-muted); font-size: 0.9rem; width: 100%;}
+
+        /* Lista de Compensación Dinámica */
+        .comp-item { transition: all 0.3s ease; }
+        .comp-item:not(.highlight) { opacity: 0.4; }
+
+        /* Controles Inferiores */
+        .controls { position: fixed; bottom: 30px; right: 40px; display: flex; gap: 15px; z-index: 100; }
+        .btn-control { background: rgba(255,255,255,0.1); border: none; color: white; width: 50px; height: 50px; border-radius: 50%; font-size: 1.5rem; cursor: pointer; transition: all 0.3s; display: flex; align-items: center; justify-content: center; }
+        .btn-control:hover { background: var(--primary-orange); transform: scale(1.1); }
+        .slide-counter { position: fixed; bottom: 45px; left: 40px; font-family: 'Outfit', sans-serif; font-weight: bold; color: var(--text-muted); font-size: 1.2rem; z-index: 100; }
+
+        /* Estilos de Impresión a PDF (16:9 Landscape) */
+        @media print {
+            @page { size: 16in 9in; margin: 0; }
+            body, html { 
+                width: 16in; height: 9in; overflow: visible !important; 
+                background-color: var(--dark-bg) !important; color: white !important;
+            }
+            .bg-animated, #fullscreenBtn, .controls, .slide-counter { 
+                display: none !important; 
+            }
+            .presentation { position: static !important; display: block !important; }
+            .slide {
+                position: relative !important; display: flex !important;
+                width: 16in !important; height: 9in !important;
+                opacity: 1 !important; visibility: visible !important;
+                transform: none !important; padding: 40px 60px !important;
+                page-break-after: always !important; break-after: page !important;
+                background-color: var(--dark-bg) !important;
+            }
+            .matrix-container { border: 1px solid #333 !important; }
+            input { border: none !important; background: transparent !important; color: white !important; }
+            .winner-cell { color: var(--success-green) !important; -webkit-text-fill-color: var(--success-green) !important; }
+            .funnel-bar { page-break-inside: avoid; }
+            /* Mostrar toda la lista compensatoria en el PDF */
+            .comp-item { opacity: 1 !important; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="bg-animated"></div>
+    <button id="fullscreenBtn" title="Activar Pantalla Completa">⛶</button>
+
+    <div class="presentation" id="presentation">
+        
+        <div class="slide active">
+            <div class="logo-container">
+                <img src="logo_tugruero.png" alt="TuGruero Logo" onerror="this.style.display='none'">
+            </div>
+            <h2 contenteditable="true">Assessment: Head of Growth</h2>
+            <h1 contenteditable="true">Plan de Expansión Nacional:<br><span class="highlight">Estrategia de crecimiento territorial</span></h1>
+            <p class="lead" contenteditable="true">En el nuevo entorno post-emergencia, el crecimiento comercial se sostiene sobre una estrategia de expansión escalable, rentable y con respaldo de operaciones.</p>
+            <p contenteditable="true"><strong>Candidato:</strong> José Sánchez | <strong>Fecha:</strong> 30 de Junio de 2026</p>
+            
+            <a href="https://jesanchezs.github.io/assessment/" target="_blank" class="link-interactive" id="dynamicLink">
+                Abrir Presentación Interactiva ↗
+            </a>
+            <p style="font-size: 0.8rem; margin-top: 10px; color: var(--text-muted);" contenteditable="true">*Doble clic sobre cualquier texto para editar. Presione Ctrl+P para exportar a PDF (16:9).</p>
+        </div>
+
+        <div class="slide">
+            <h2 contenteditable="true">1. Diagnóstico de priorización: Matriz de Decisión Territorial</h2>
+            <p class="lead" contenteditable="true">Para definir nuestro próximo mercado, propongo una matriz de evaluación cruzada entre departamentos, puntuando variables clave del 1 al 10. Lo fundamental aquí no es el número aislado, sino cómo se comparan las opciones entre sí para eliminar sesgos y destilar la decisión óptima.</p>
+            <p contenteditable="true">A continuación, una precarga de la matriz de decisión basada en datos que se pueden extraer desde google maps o experiencias asociadas a consumo masivo:</p>
+            
+            <div class="matrix-container">
+                <table id="matrixTable">
+                    <thead>
+                        <tr>
+                            <th contenteditable="true" style="text-align: left;">CRITERIO ESTRATÉGICO</th>
+                            <th contenteditable="true">PESO (%)</th>
+                            <th contenteditable="true">VALENCIA<br><small>(CARABOBO)</small></th>
+                            <th contenteditable="true">BARCELONA<br><small>(ANZ.)</small></th>
+                            <th contenteditable="true">MATURÍN<br><small>(MONAGAS)</small></th>
+                            <th contenteditable="true">MARACAIBO<br><small>(ZULIA)</small></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td contenteditable="true" style="text-align: left;">Capacidad Operativa y Supply (Grúas)</td>
+                            <td class="col-weight"><input type="number" class="input-cell weight-input" value="30" min="0" max="100">%</td>
+                            <td><input type="number" class="input-cell val-input" data-col="0" value="9" min="1" max="10"></td>
+                            <td><input type="number" class="input-cell val-input" data-col="1" value="7" min="1" max="10"></td>
+                            <td><input type="number" class="input-cell val-input" data-col="2" value="6" min="1" max="10"></td>
+                            <td><input type="number" class="input-cell val-input" data-col="3" value="5" min="1" max="10"></td>
+                        </tr>
+                        <tr>
+                            <td contenteditable="true" style="text-align: left;">Densidad Mercado B2B (Flotas)</td>
+                            <td class="col-weight"><input type="number" class="input-cell weight-input" value="30" min="0" max="100">%</td>
+                            <td><input type="number" class="input-cell val-input" data-col="0" value="9" min="1" max="10"></td>
+                            <td><input type="number" class="input-cell val-input" data-col="1" value="8" min="1" max="10"></td>
+                            <td><input type="number" class="input-cell val-input" data-col="2" value="7" min="1" max="10"></td>
+                            <td><input type="number" class="input-cell val-input" data-col="3" value="9" min="1" max="10"></td>
+                        </tr>
+                        <tr>
+                            <td contenteditable="true" style="text-align: left;">Resiliencia Logística desde Caracas</td>
+                            <td class="col-weight"><input type="number" class="input-cell weight-input" value="15" min="0" max="100">%</td>
+                            <td><input type="number" class="input-cell val-input" data-col="0" value="8" min="1" max="10"></td>
+                            <td><input type="number" class="input-cell val-input" data-col="1" value="7" min="1" max="10"></td>
+                            <td><input type="number" class="input-cell val-input" data-col="2" value="5" min="1" max="10"></td>
+                            <td><input type="number" class="input-cell val-input" data-col="3" value="3" min="1" max="10"></td>
+                        </tr>
+                        <tr>
+                            <td contenteditable="true" style="text-align: left;">Dinamismo Económico / Pago Contado</td>
+                            <td class="col-weight"><input type="number" class="input-cell weight-input" value="15" min="0" max="100">%</td>
+                            <td><input type="number" class="input-cell val-input" data-col="0" value="7" min="1" max="10"></td>
+                            <td><input type="number" class="input-cell val-input" data-col="1" value="8" min="1" max="10"></td>
+                            <td><input type="number" class="input-cell val-input" data-col="2" value="8" min="1" max="10"></td>
+                            <td><input type="number" class="input-cell val-input" data-col="3" value="7" min="1" max="10"></td>
+                        </tr>
+                        <tr>
+                            <td contenteditable="true" style="text-align: left;">Sinergia B2B2C (Concesionarios/Seguros)</td>
+                            <td class="col-weight"><input type="number" class="input-cell weight-input" value="10" min="0" max="100">%</td>
+                            <td><input type="number" class="input-cell val-input" data-col="0" value="8" min="1" max="10"></td>
+                            <td><input type="number" class="input-cell val-input" data-col="1" value="6" min="1" max="10"></td>
+                            <td><input type="number" class="input-cell val-input" data-col="2" value="5" min="1" max="10"></td>
+                            <td><input type="number" class="input-cell val-input" data-col="3" value="8" min="1" max="10"></td>
+                        </tr>
+                        <tr class="row-total">
+                            <td contenteditable="true" style="text-align: right;">PUNTAJE TOTAL (Suma Producto)</td>
+                            <td id="total-weights">100%</td>
+                            <td id="tot-0">0.00</td>
+                            <td id="tot-1">0.00</td>
+                            <td id="tot-2">0.00</td>
+                            <td id="tot-3">0.00</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <div style="margin-top: 15px; background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px; border-left: 4px solid var(--primary-orange);">
+                <p contenteditable="true" style="margin: 0;">Basado en esta ponderación, la recomendación concreta es iniciar la expansión en Valencia (Carabobo). Su puntaje de 8.45 refleja la mejor combinación entre un ecosistema B2B denso para asegurar flujo de caja rápido y una infraestructura logística estable que minimiza el riesgo operativo en los primeros 90 días.</p>
+            </div>
+        </div>
+
+        <div class="slide">
+            <h2 contenteditable="true">2. Plan de los primeros 90 días</h2>
+            <p class="lead" contenteditable="true">El Head of Growth asegura la operación, el equipo local calienta el terreno comercial.</p>
+            
+            <div class="grid-2">
+                <div class="card" style="border-left: 4px solid #555;">
+                    <h3 contenteditable="true">Mes 1: Setup Operativo (Días 1-30)</h3>
+                    <p contenteditable="true"><strong>Meta:</strong> Cero ventas sin respaldo.</p>
+                    <p contenteditable="true">Evaluación de ciudad en fisico.<br>
+                    • Homologación de acuerdos de servicio con 4 grúas y 3 talleres.<br>
+                    • Contratación del City Manager local.<br>
+                    • Creación inicial de Base de Datos objetivo B2B.</p>
+                </div>
+                <div class="card" style="border-left: 4px solid var(--primary-orange);">
+                    <h3 contenteditable="true">Mes 2: Tracción B2B (Dias 31-60)</h3>
+                    <p contenteditable="true"><strong>El Protocolo 27/3 de Viaje:</strong></p>
+                    <p contenteditable="true">27 días de inteligencia remota y prospección local.<br>
+                    3 días de patear calle: Head of Growth viaja a cerrar ventas corporativas clave de la mano del city manager y acuerdos con aliados.<br>
+                    • Cierre estimado: 150 vehículos afiliados (3 empresas de al menos 50 vehículos cada una).</p>
+                </div>
+                <div class="card" style="grid-column: 1 / -1; display: flex; justify-content: space-between; align-items: center; padding: 15px 25px;">
+                    <div>
+                        <h3 contenteditable="true">Mes 3: Escalabilidad (Días 61-90)</h3>
+                        <p contenteditable="true" style="margin:0;">Activación de pauta B2C local, seguimiento a ventas de aliados y auditoría de estándares de servicio.</p>
+                    </div>
+                    <div style="text-align: right;">
+                        <span contenteditable="true" style="color: var(--success-green); font-size: 1.5rem; font-weight: bold;">Meta: 500 Usuarios</span><br>
+                        <span contenteditable="true" style="color: var(--text-muted);">SLA < 35 min</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="slide">
+            <h2 contenteditable="true">3. Canales y modelos de adquisición: primeros 500 afiliados</h2>
+            <p class="lead" contenteditable="true">Para proteger el flujo de caja, el volumen inicial se inyecta mediante acuerdos corporativos, diluyendo el costo de adquisición (CAC).</p>
+            
+            <div class="funnel-container">
+                <div class="funnel-bar">
+                    <div class="funnel-label" contenteditable="true">B2B Corporativo</div>
+                    <div class="funnel-fill b2b-fill" contenteditable="true">60% (300 Afiliados)</div>
+                    <div class="funnel-kpi" contenteditable="true"><strong>Target:</strong> Flotas logisticas / Alimentos | <strong>KPI:</strong> Lead-to-Close Ratio y Ciclo de Venta.</div>
+                </div>
+                <div class="funnel-bar">
+                    <div class="funnel-label" contenteditable="true">B2B2C Intermediarios</div>
+                    <div class="funnel-fill b2b2c-fill" contenteditable="true">24% (120 Afiliados)</div>
+                    <div class="funnel-kpi" contenteditable="true"><strong>Target:</strong> Concesionarios de Usados AAA | <strong>KPI:</strong> Attach Rate (Membresias por carro vendido).</div>
+                </div>
+                <div class="funnel-bar">
+                    <div class="funnel-label" contenteditable="true">B2C Directo</div>
+                    <div class="funnel-fill b2c-fill" contenteditable="true">16% (80 Afiliados)</div>
+                    <div class="funnel-kpi" contenteditable="true"><strong>Target:</strong> Conductores Particulares (Meta Ads) | <strong>KPI:</strong> Costo de Adquisición (CAC).</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="slide">
+            <h2 contenteditable="true">4. Liderazgo y Autonomía: "Confía pero Verifica"</h2>
+            <div class="grid-2">
+                <div class="card">
+                    <h3 contenteditable="true">Parte A - Construcción del equipo</h3>
+                    <p contenteditable="true">Contratamos a un perfil 80% comercial 20% operativo con experiencia corporativa en el terreno. Necesitamos desarrollar red de contactos y clientes en sitio.</p>
+                    <p contenteditable="true">Ritmo de reuniones orientado al desbloqueo del pipeline:</p>
+                    <ul contenteditable="true" style="margin-left: 20px; color: var(--text-muted); line-height: 1.6; font-size: 0.95rem;">
+                        <li>Sesión 1:1 Semanal (30min por ciudad): Foco en destrabar negociaciones corporativas y acuerdos de servicio locales.</li>
+                        <li>Comité Territorial Semanal (90min): Presentación cruzada de resultados entre ciudades para escalar buenas prácticas y hacer seguimientos de KPIs.</li>
+                        <li>Visita en terreno mensual con agenda previamente debatida con el city manager.</li>
+                    </ul>
+                    
+                    <h3 contenteditable="true" style="margin-top: 20px;">Plan Compensatorio Dinámico</h3>
+                    <p contenteditable="true">Adaptación del variable a la curva de madurez del City Manager:</p>
+                    <input type="range" id="comp-slider" min="1" max="3" value="1" style="width: 100%; accent-color: var(--primary-orange); margin: 10px 0; cursor: pointer;">
+                    
+                    <ul id="comp-list" contenteditable="true" style="list-style: none; padding: 0; font-size: 0.95rem; line-height: 1.5; margin-top: 10px;">
+                        <li class="comp-item highlight" data-level="1"><strong>Mes 1 (Siembra):</strong> 70% Gestión / 30% Cierre</li>
+                        <li class="comp-item" data-level="2"><strong>Mes 2 (Transición):</strong> 50% Gestión / 50% Cierre</li>
+                        <li class="comp-item" data-level="3"><strong>Mes 3+ (Cosecha):</strong> 20% Gestión / 80% Cierre</li>
+                    </ul>
+                </div>
+                <div class="card" style="background: rgba(255,102,0,0.05); border-color: var(--primary-orange);">
+                    <h3 contenteditable="true">Parte B - Iniciativa propia en experiencias previas</h3>
+                    <div style="font-size: 0.95rem; line-height: 1.4;">
+                        <p contenteditable="true"><strong>Situación:</strong> Despliegue de un equipo comercial recién contratado en una empresa de venta de balanzas, el cual iba a salir a la calle sin una metodología estandarizada para prospectar el mercado.</p>
+                        <p contenteditable="true"><strong>Tarea:</strong> Prevenir el trabajo a ciegas ("patear calle sin rumbo") y asegurar que el esfuerzo de los nuevos asesores fuera medible, escalable y no causara frustración temprana.</p>
+                        <p contenteditable="true"><strong>Acción:</strong> Sin ser una directriz asignada, estructuré una metodología de "barrido territorial" desde cero. Implementé un sistema de medición mediante google forms / maps: en la primera etapa medí al equipo estrictamente por el volumen de negocios caracterizados en sistema, y posteriormente, ajusté los KPIs para medirlos por la calidad del seguimiento y el cierre de dichos negocios.</p>
+                        <p class="lead" contenteditable="true" style="font-size: 1rem; border-left-color: var(--success-green); padding-left: 15px; margin-top: 10px;">
+                            <strong>Resultado:</strong> Se construyó una base de prospectos perfilada desde el primer día, generando un embudo de ventas predecible. (Este éxito real es el fundamento operativo del Plan Compensatorio Dinámico que propongo para la expansión de TuGruero).
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="slide-counter" id="counter">1 / 5</div>
+    <div class="controls">
+        <button class="btn-control" id="prevBtn" title="Anterior">&#8592;</button>
+        <button class="btn-control" id="nextBtn" title="Siguiente">&#8594;</button>
+    </div>
+
+    <script>
+        // --- NAVEGACIÓN DE SLIDES ---
+        const slides = document.querySelectorAll('.slide');
+        const counter = document.getElementById('counter');
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        let currentSlide = 0;
+
+        function updateSlides() {
+            slides.forEach((slide, index) => {
+                slide.classList.remove('active', 'past');
+                if (index === currentSlide) {
+                    slide.classList.add('active');
+                } else if (index < currentSlide) {
+                    slide.classList.add('past');
+                }
+            });
+            counter.innerText = `${currentSlide + 1} / ${slides.length}`;
+        }
+
+        function nextSlide() {
+            if (currentSlide < slides.length - 1) {
+                currentSlide++;
+                updateSlides();
+            }
+        }
+
+        function prevSlide() {
+            if (currentSlide > 0) {
+                currentSlide--;
+                updateSlides();
+            }
+        }
+
+        nextBtn.addEventListener('click', nextSlide);
+        prevBtn.addEventListener('click', prevSlide);
+
+        document.addEventListener('keydown', (e) => {
+            if(document.activeElement.isContentEditable || document.activeElement.tagName === 'INPUT') return;
+            if (e.key === 'ArrowRight') nextSlide();
+            if (e.key === 'ArrowLeft') prevSlide();
+        });
+
+        // --- FULLSCREEN API ---
+        const fsBtn = document.getElementById('fullscreenBtn');
+        fsBtn.addEventListener('click', () => {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(err => {
+                    console.log(`Error activando pantalla completa: ${err.message}`);
+                });
+                fsBtn.style.display = 'none';
+            }
+        });
+        document.addEventListener('fullscreenchange', () => {
+            if (!document.fullscreenElement) {
+                fsBtn.style.display = 'block'; 
+            }
+        });
+
+        // --- LÓGICA CALCULADORA MATRIZ (LÁMINA 2) CON PESOS DINÁMICOS ---
+        function calculateMatrix() {
+            let totals = [0, 0, 0, 0];
+            let totalWeightSum = 0;
+            const rows = document.querySelectorAll('#matrixTable tbody tr:not(.row-total)');
+
+            rows.forEach((row) => {
+                const weightInput = row.querySelector('.weight-input');
+                let weight = 0;
+                if(weightInput) {
+                    weight = (parseFloat(weightInput.value) || 0) / 100;
+                    totalWeightSum += (parseFloat(weightInput.value) || 0);
+                }
+
+                const inputs = row.querySelectorAll('.val-input');
+                inputs.forEach((input) => {
+                    const colIndex = parseInt(input.getAttribute('data-col'));
+                    const val = parseFloat(input.value) || 0;
+                    totals[colIndex] += val * weight;
+                });
+            });
+
+            document.getElementById('total-weights').innerText = totalWeightSum + '%';
+
+            let maxVal = -1;
+            let maxIndex = -1;
+            
+            totals.forEach((tot, idx) => {
+                if (tot > maxVal) { maxVal = tot; maxIndex = idx; }
+                const cell = document.getElementById(`tot-${idx}`);
+                cell.innerText = tot.toFixed(2);
+                cell.classList.remove('winner-cell');
+            });
+
+            if(maxIndex > -1 && maxVal > 0) {
+                document.getElementById(`tot-${maxIndex}`).classList.add('winner-cell');
+            }
+        }
+
+        document.querySelectorAll('.val-input, .weight-input').forEach(input => {
+            input.addEventListener('input', calculateMatrix);
+        });
+
+        // --- LÓGICA SLIDER DE COMPENSACIÓN (LÁMINA 5) ---
+        const slider = document.getElementById('comp-slider');
+        const compItems = document.querySelectorAll('.comp-item');
+
+        slider.addEventListener('input', (e) => {
+            const val = e.target.value;
+            compItems.forEach(item => {
+                if(item.getAttribute('data-level') === val) {
+                    item.classList.add('highlight');
+                } else {
+                    item.classList.remove('highlight');
+                }
+            });
+        });
+
+        // Inicialización
+        updateSlides();
+        calculateMatrix();
+    </script>
+</body>
+</html>
